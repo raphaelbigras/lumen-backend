@@ -25,7 +25,7 @@ export class CategoriesRepository {
   }
 
   update(id: string, data: Prisma.CategoryUpdateInput) {
-    return this.prisma.category.update({ where: { id }, data });
+    return this.prisma.category.update({ where: { id, deletedAt: null }, data });
   }
 
   softDelete(id: string) {

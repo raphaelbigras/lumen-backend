@@ -23,7 +23,7 @@ export class CategoriesService {
 
   async update(id: string, dto: UpdateCategoryDto) {
     await this.findById(id);
-    return this.repo.update(id, dto);
+    return this.repo.update(id, { name: dto.name });
   }
 
   async remove(id: string) {

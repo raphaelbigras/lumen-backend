@@ -13,7 +13,7 @@ export class TicketsRepository {
     if (filters.assigneeId) where.assignments = { some: { agentId: filters.assigneeId } };
     return this.prisma.ticket.findMany({
       where,
-      include: { submitter: true, assignments: { include: { agent: true } }, tags: { include: { tag: true } } },
+      include: { submitter: true, assignments: { include: { agent: true } }, category: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -28,7 +28,7 @@ export class TicketsRepository {
         comments: { where: { deletedAt: null }, include: { author: true }, orderBy: { createdAt: 'asc' } },
         attachments: { where: { deletedAt: null } },
         events: { include: { actor: true }, orderBy: { createdAt: 'asc' } },
-        tags: { include: { tag: true } },
+        category: true,
       },
     });
   }

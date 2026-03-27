@@ -74,12 +74,14 @@ model Ticket {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   deletedAt    DateTime?
+  resolvedAt   DateTime?
+  categoryId   String?
+  category     Category?  @relation(fields: [categoryId], references: [id])
 
   comments     TicketComment[]
   attachments  Attachment[]
   assignments  TicketAssignment[]
   events       TicketEvent[]
-  tags         TicketTag[]
 
   @@map("tickets")
 }
@@ -137,20 +139,15 @@ model TicketAssignment {
   @@map("ticket_assignments")
 }
 
-model Tag {
-  id      String      @id @default(uuid())
-  name    String      @unique
-  tickets TicketTag[]
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  isDefault   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  tickets     Ticket[]
 
-  @@map("tags")
-}
-
-model TicketTag {
-  ticketId String
-  tagId    String
-  ticket   Ticket @relation(fields: [ticketId], references: [id])
-  tag      Tag    @relation(fields: [tagId], references: [id])
-
-  @@id([ticketId, tagId])
-  @@map("ticket_tags")
+  @@map("categories")
 }

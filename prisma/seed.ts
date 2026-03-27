@@ -2,7 +2,26 @@ import { PrismaClient, TicketStatus, TicketPriority, Role } from '@prisma/client
 
 const prisma = new PrismaClient();
 
+const DEFAULT_CATEGORIES = [
+  'Réseau',
+  'Logiciel',
+  'Matériel',
+  'Accès / Permissions',
+  'Messagerie',
+  'Autre',
+];
+
 async function main() {
+  // Seed default categories
+  for (const name of DEFAULT_CATEGORIES) {
+    await prisma.category.upsert({
+      where: { name },
+      update: {},
+      create: { name, isDefault: true },
+    });
+  }
+  console.log('Seeded default categories');
+
   // Create departments
   const itDept = await prisma.department.upsert({
     where: { name: 'IT Support' },

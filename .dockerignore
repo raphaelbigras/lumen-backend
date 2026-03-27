@@ -1,0 +1,28 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+
+# VCS / editor
+.git
+.gitignore
+.vscode
+.idea
+
+# Environment / local config
+.env
+.env.*
+!.env.example
+
+# Logs and caches
+logs
+*.log
+npm-debug.log*
+coverage
+.cache
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { TicketStatus, TicketPriority } from '@prisma/client';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -22,4 +22,9 @@ export class UpdateTicketDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  categoryId?: string;
 }

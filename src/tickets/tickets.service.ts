@@ -30,6 +30,7 @@ export class TicketsService {
       priority: dto.priority,
       submitter: { connect: { id: submitterId } },
       ...(dto.departmentId && { department: { connect: { id: dto.departmentId } } }),
+      ...(dto.categoryId && { category: { connect: { id: dto.categoryId } } }),
     });
 
     await this.repo.createEvent({
@@ -45,7 +46,19 @@ export class TicketsService {
 
   async update(id: string, dto: UpdateTicketDto, actorId: string) {
     const ticket = await this.findById(id);
-    const updated = await this.repo.update(id, dto);
+
+    const data: any = { ...dto };
+    if (dto.categoryId) {
+      data.category = { connect: { id: dto.categoryId } };
+      delete data.categoryId;
+    }
+    if (dto.status === 'RESOLVED' && ticket.status !== 'RESOLVED') {
+      data.resolvedAt = new Date();
+    } else if (dto.status && dto.status !== 'RESOLVED' && ticket.status === 'RESOLVED') {
+      data.resolvedAt = null;
+    }
+
+    const updated = await this.repo.update(id, data);
 
     if (dto.status && dto.status !== ticket.status) {
       await this.repo.createEvent({

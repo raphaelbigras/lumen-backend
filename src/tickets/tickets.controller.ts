@@ -1,10 +1,11 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TicketsService } from './tickets.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { AssignTicketDto } from './dto/assign-ticket.dto';
+import { ListTicketsQueryDto } from './dto/list-tickets-query.dto';
 
 @ApiTags('tickets')
 @ApiBearerAuth()
@@ -14,11 +15,12 @@ export class TicketsController {
   constructor(private ticketsService: TicketsService) {}
 
   @Get()
-  @ApiQuery({ name: 'status', required: false })
-  @ApiQuery({ name: 'priority', required: false })
-  @ApiQuery({ name: 'assigneeId', required: false })
-  findAll(@Query() query: any) {
-    return this.ticketsService.findAll(query);
+  findAll(@Query() query: ListTicketsQueryDto) {
+    return this.ticketsService.findAll({
+      ...query,
+      page: query.page ? parseInt(query.page) : undefined,
+      limit: query.limit ? parseInt(query.limit) : undefined,
+    });
   }
 
   @Get(':id')

@@ -6,16 +6,50 @@ import { TicketStatus, TicketPriority, Prisma } from '@prisma/client';
 export class TicketsRepository {
   constructor(private prisma: PrismaService) {}
 
-  findAll(filters: { status?: TicketStatus; priority?: TicketPriority; assigneeId?: string }) {
+  async findAll(filters: {
+    status?: TicketStatus;
+    priority?: TicketPriority;
+    assigneeId?: string;
+    categoryId?: string;
+    departmentId?: string;
+    submitterId?: string;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+    page?: number;
+    limit?: number;
+  }) {
     const where: Prisma.TicketWhereInput = { deletedAt: null };
     if (filters.status) where.status = filters.status;
     if (filters.priority) where.priority = filters.priority;
     if (filters.assigneeId) where.assignments = { some: { agentId: filters.assigneeId } };
-    return this.prisma.ticket.findMany({
-      where,
-      include: { submitter: true, assignments: { include: { agent: true } }, category: true },
-      orderBy: { createdAt: 'desc' },
-    });
+    if (filters.categoryId) where.categoryId = filters.categoryId;
+    if (filters.departmentId) where.departmentId = filters.departmentId;
+    if (filters.submitterId) where.submitterId = filters.submitterId;
+    if (filters.search) where.title = { contains: filters.search, mode: 'insensitive' };
+
+    const page = filters.page || 1;
+    const limit = filters.limit || 25;
+    const sortBy = filters.sortBy || 'createdAt';
+    const sortOrder = filters.sortOrder || 'desc';
+
+    const [data, total] = await Promise.all([
+      this.prisma.ticket.findMany({
+        where,
+        include: {
+          submitter: true,
+          department: true,
+          category: true,
+          assignments: { include: { agent: true } },
+        },
+        orderBy: { [sortBy]: sortOrder },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.ticket.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
   }
 
   findById(id: string) {

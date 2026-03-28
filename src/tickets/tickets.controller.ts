@@ -15,11 +15,13 @@ export class TicketsController {
   constructor(private ticketsService: TicketsService) {}
 
   @Get()
-  findAll(@Query() query: ListTicketsQueryDto) {
+  findAll(@Query() query: ListTicketsQueryDto, @Request() req) {
     return this.ticketsService.findAll({
       ...query,
       page: query.page ? parseInt(query.page) : undefined,
       limit: query.limit ? parseInt(query.limit) : undefined,
+      // Regular users only see their own tickets
+      submitterId: req.user.role === 'USER' ? req.user.id : query.submitterId,
     });
   }
 

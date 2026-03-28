@@ -10,6 +10,7 @@ import { AttachmentsModule } from './attachments/attachments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
 import { CategoriesModule } from './categories/categories.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CategoriesModule } from './categories/categories.module';
     NotificationsModule,
     SearchModule,
     CategoriesModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule {}

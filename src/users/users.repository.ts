@@ -26,6 +26,10 @@ export class UsersRepository {
     return this.prisma.user.update({ where: { id }, data });
   }
 
+  updateByKeycloakId(keycloakId: string, data: Prisma.UserUpdateInput) {
+    return this.prisma.user.update({ where: { keycloakId }, data });
+  }
+
   softDelete(id: string) {
     return this.prisma.user.update({ where: { id }, data: { deletedAt: new Date() } });
   }

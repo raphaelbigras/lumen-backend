@@ -26,4 +26,8 @@ export class UsersService {
   update(id: string, data: any) {
     return this.repo.update(id, data);
   }
+
+  updateRole(keycloakId: string, role: string) {
+    return this.repo.updateByKeycloakId(keycloakId, { role: role as any });
+  }
 }

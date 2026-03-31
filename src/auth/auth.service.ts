@@ -1,8 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 
+interface CachedUser {
+  user: any;
+  expiresAt: number;
+}
+
+const USER_CACHE_TTL = 60_000; // 1 minute
+
 @Injectable()
 export class AuthService {
+  private userCache = new Map<string, CachedUser>();
+
   constructor(private usersService: UsersService) {}
 
   async validateAndProvisionUser(payload: any) {
@@ -10,6 +19,11 @@ export class AuthService {
     const keycloakRole = payload.realm_access?.roles?.includes('admin') ? 'ADMIN'
       : payload.realm_access?.roles?.includes('agent') ? 'AGENT'
       : 'USER';
+
+    const cached = this.userCache.get(keycloakId);
+    if (cached && cached.expiresAt > Date.now() && cached.user.role === keycloakRole) {
+      return cached.user;
+    }
 
     let user = await this.usersService.findByKeycloakId(keycloakId);
     if (!user) {
@@ -23,6 +37,8 @@ export class AuthService {
     } else if (user.role !== keycloakRole) {
       user = await this.usersService.updateRole(keycloakId, keycloakRole);
     }
+
+    this.userCache.set(keycloakId, { user, expiresAt: Date.now() + USER_CACHE_TTL });
     return user;
   }
 }

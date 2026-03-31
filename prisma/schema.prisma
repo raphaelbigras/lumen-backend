@@ -83,6 +83,13 @@ model Ticket {
   assignments  TicketAssignment[]
   events       TicketEvent[]
 
+  @@index([status])
+  @@index([priority])
+  @@index([categoryId])
+  @@index([departmentId])
+  @@index([submitterId])
+  @@index([deletedAt])
+  @@index([createdAt])
   @@map("tickets")
 }
 
@@ -136,6 +143,7 @@ model TicketAssignment {
   assignedAt DateTime @default(now())
 
   @@unique([ticketId, agentId])
+  @@index([agentId])
   @@map("ticket_assignments")
 }
 

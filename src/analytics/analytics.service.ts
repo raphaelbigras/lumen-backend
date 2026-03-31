@@ -13,11 +13,30 @@ export class AnalyticsService {
   }
 
   private async getUserDashboard(userId: string) {
-    const [counts, myTickets] = await Promise.all([
+    const [counts, myTickets, volumeRaw, categoryRaw, resolvedTickets] = await Promise.all([
       this.repo.getUserTicketCounts(userId),
       this.repo.getUserTickets(userId),
+      this.repo.getUserVolumeByWeek(userId, 8),
+      this.repo.getUserCountByCategory(userId),
+      this.repo.getUserResolvedTicketsWithTimes(userId),
     ]);
-    return { ...counts, myTickets };
+
+    const volumeByWeek = this.groupByWeek(volumeRaw.map((t) => t.createdAt));
+    const medianResolutionHours = this.computeMedianHours(resolvedTickets);
+
+    const categoryIds = categoryRaw.map((c) => c.categoryId).filter(Boolean) as string[];
+    const categoryNames = categoryIds.length > 0 ? await this.repo.getCategoryNames(categoryIds) : [];
+    const totalCategorized = categoryRaw.reduce((sum, c) => sum + c._count, 0);
+    const byCategory = categoryRaw.map((c) => {
+      const cat = categoryNames.find((cn) => cn.id === c.categoryId);
+      return {
+        category: cat?.name || 'Sans catégorie',
+        count: c._count,
+        percentage: totalCategorized > 0 ? Math.round((c._count / totalCategorized) * 100) : 0,
+      };
+    });
+
+    return { ...counts, myTickets, volumeByWeek, byCategory, medianResolutionHours };
   }
 
   private async getAdminDashboard() {

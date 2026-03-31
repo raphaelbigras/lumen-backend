@@ -105,12 +105,15 @@ export class AnalyticsRepository {
   }
 
   async getUserTicketCounts(userId: string) {
-    const [myOpenCount, myInProgressCount, myResolvedCount] = await Promise.all([
+    const [myOpenCount, myInProgressCount, myResolvedCount, myPendingCount, myClosedCount, myTotalCount] = await Promise.all([
       this.prisma.ticket.count({ where: { submitterId: userId, status: 'OPEN', deletedAt: null } }),
       this.prisma.ticket.count({ where: { submitterId: userId, status: 'IN_PROGRESS', deletedAt: null } }),
       this.prisma.ticket.count({ where: { submitterId: userId, status: 'RESOLVED', deletedAt: null } }),
+      this.prisma.ticket.count({ where: { submitterId: userId, status: 'PENDING', deletedAt: null } }),
+      this.prisma.ticket.count({ where: { submitterId: userId, status: 'CLOSED', deletedAt: null } }),
+      this.prisma.ticket.count({ where: { submitterId: userId, deletedAt: null } }),
     ]);
-    return { myOpenCount, myInProgressCount, myResolvedCount };
+    return { myOpenCount, myInProgressCount, myResolvedCount, myPendingCount, myClosedCount, myTotalCount };
   }
 
   async getUserTickets(userId: string) {
@@ -119,6 +122,31 @@ export class AnalyticsRepository {
       include: { category: { select: { name: true } } },
       orderBy: { updatedAt: 'desc' },
       take: 20,
+    });
+  }
+
+  async getUserVolumeByWeek(userId: string, weeks: number) {
+    const since = new Date();
+    since.setDate(since.getDate() - weeks * 7);
+    return this.prisma.ticket.findMany({
+      where: { submitterId: userId, createdAt: { gte: since }, deletedAt: null },
+      select: { createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async getUserCountByCategory(userId: string) {
+    return this.prisma.ticket.groupBy({
+      by: ['categoryId'],
+      where: { submitterId: userId, deletedAt: null, categoryId: { not: null } },
+      _count: true,
+    });
+  }
+
+  async getUserResolvedTicketsWithTimes(userId: string) {
+    return this.prisma.ticket.findMany({
+      where: { submitterId: userId, resolvedAt: { not: null }, deletedAt: null },
+      select: { createdAt: true, resolvedAt: true },
     });
   }
 }

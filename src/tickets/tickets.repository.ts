@@ -36,11 +36,23 @@ export class TicketsRepository {
     const [data, total] = await Promise.all([
       this.prisma.ticket.findMany({
         where,
-        include: {
-          submitter: true,
-          department: true,
-          category: true,
-          assignments: { include: { agent: true } },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          priority: true,
+          createdAt: true,
+          updatedAt: true,
+          resolvedAt: true,
+          deletedAt: true,
+          submitter: { select: { id: true, firstName: true, lastName: true } },
+          department: { select: { id: true, name: true } },
+          category: { select: { id: true, name: true } },
+          assignments: {
+            select: { agent: { select: { id: true, firstName: true, lastName: true } } },
+            orderBy: { assignedAt: 'desc' },
+            take: 1,
+          },
         },
         orderBy: { [sortBy]: sortOrder },
         skip: (page - 1) * limit,

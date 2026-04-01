@@ -1,6 +1,6 @@
 # Lumen Backend
 
-NestJS REST API for **Lumen** — a self-hosted IT ticketing system built for Groupe Meloche Inc. (600+ employees). Serves as the backend for a Jira Service Management / Zendesk alternative.
+NestJS REST API for **Lumen** — a self-hosted IT ticketing system.
 
 ## Tech Stack
 

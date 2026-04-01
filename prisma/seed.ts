@@ -88,12 +88,12 @@ async function main() {
   // Create seed users (these are local DB records; keycloakId is a placeholder)
   const admin = await prisma.user.upsert({
     where: { email: 'admin@lumen.local' },
-    update: {},
+    update: { firstName: 'Raphaël', lastName: 'Bigras', role: Role.ADMIN },
     create: {
       keycloakId: 'seed-admin-001',
       email: 'admin@lumen.local',
-      firstName: 'Katy',
-      lastName: 'Bélanger',
+      firstName: 'Raphaël',
+      lastName: 'Bigras',
       role: Role.ADMIN,
       departmentId: itDept.id,
     },

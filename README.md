@@ -98,7 +98,10 @@ Controller  →  Service  →  Repository  →  Prisma / External Services
 | `attachments` | `src/attachments/` | MinIO file upload/download, metadata storage |
 | `notifications` | `src/notifications/` | BullMQ email job consumer (SMTP dispatch) |
 | `search` | `src/search/` | PostgreSQL full-text search with ILIKE fallback |
-| `prisma` | `src/prisma/` | Global PrismaService singleton |
+| `categories` | `src/categories/` | Ticket category CRUD (ADMIN/AGENT) |
+| `departments` | `src/departments/` | Department CRUD (ADMIN/AGENT) |
+| `analytics` | `src/analytics/` | Admin dashboard stats (optimized SQL aggregations) |
+| `prisma` | `src/prisma/` | Global PrismaService singleton (pool size 10) |
 
 ## API Endpoints
 
@@ -140,6 +143,27 @@ All routes are prefixed with `/api` and require a `Bearer` JWT unless noted.
 |---|---|---|
 | `GET` | `/api/search?q=<query>` | Full-text search across tickets (max 20 results) |
 
+### Categories
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/categories` | List all categories |
+| `POST` | `/api/categories` | Create category (ADMIN/AGENT) |
+| `PATCH` | `/api/categories/:id` | Update category (ADMIN/AGENT) |
+| `DELETE` | `/api/categories/:id` | Soft-delete category (ADMIN/AGENT) |
+
+### Departments
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/departments` | List all departments (with ticket count) |
+| `POST` | `/api/departments` | Create department (ADMIN/AGENT) |
+| `PATCH` | `/api/departments/:id` | Update department (ADMIN/AGENT) |
+| `DELETE` | `/api/departments/:id` | Soft-delete department (ADMIN/AGENT) |
+
+### Analytics
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/analytics/dashboard` | Admin dashboard aggregates (status counts, charts, agent perf) |
+
 ## Data Model
 
 ```
@@ -149,8 +173,12 @@ User ──< TicketAssignment >── Ticket ──< TicketComment
                                  ├──< TicketEvent  (audit log)
                                  └──< TicketTag >── Tag
 
-User ──< Department ──< Ticket
+Category ──< Ticket
+Department ──< Ticket
+User ──< Department
 ```
+
+Tickets also store: `site` (Valleyfield, Beauharnois, Montréal, Brossard, Bromont, Hemmingford).
 
 ### Key Design Decisions
 

@@ -2,10 +2,6 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Re
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TicketsService } from './tickets.service';
-import { CreateTicketDto } from './dto/create-ticket.dto';
-import { UpdateTicketDto } from './dto/update-ticket.dto';
-import { AssignTicketDto } from './dto/assign-ticket.dto';
-import { ListTicketsQueryDto } from './dto/list-tickets-query.dto';
 
 @ApiTags('tickets')
 @ApiBearerAuth()
@@ -15,14 +11,8 @@ export class TicketsController {
   constructor(private ticketsService: TicketsService) {}
 
   @Get()
-  findAll(@Query() query: ListTicketsQueryDto, @Request() req) {
-    return this.ticketsService.findAll({
-      ...query,
-      page: query.page ? parseInt(query.page) : undefined,
-      limit: query.limit ? parseInt(query.limit) : undefined,
-      // Regular users only see their own tickets
-      submitterId: req.user.role === 'USER' ? req.user.id : query.submitterId,
-    });
+  findAll(@Query() query: unknown, @Request() req) {
+    return this.ticketsService.findAll(query, req.user.role, req.user.id);
   }
 
   @Get(':id')
@@ -36,18 +26,18 @@ export class TicketsController {
   }
 
   @Post()
-  create(@Body() dto: CreateTicketDto, @Request() req) {
-    return this.ticketsService.create(dto, req.user.id);
+  create(@Body() body: unknown, @Request() req) {
+    return this.ticketsService.create(body, req.user.id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateTicketDto, @Request() req) {
-    return this.ticketsService.update(id, dto, req.user.id);
+  update(@Param('id') id: string, @Body() body: unknown, @Request() req) {
+    return this.ticketsService.update(id, body, req.user.id);
   }
 
   @Post(':id/assign')
-  assign(@Param('id') id: string, @Body() dto: AssignTicketDto, @Request() req) {
-    return this.ticketsService.assign(id, dto, req.user.id);
+  assign(@Param('id') id: string, @Body() body: unknown, @Request() req) {
+    return this.ticketsService.assign(id, body, req.user.id);
   }
 
   @Delete(':id')

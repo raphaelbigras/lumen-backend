@@ -2,9 +2,13 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { TicketsRepository } from './tickets.repository';
-import { CreateTicketDto } from './dto/create-ticket.dto';
-import { UpdateTicketDto } from './dto/update-ticket.dto';
-import { AssignTicketDto } from './dto/assign-ticket.dto';
+import { createTicketSchema } from './schemas/create-ticket.schema';
+import { updateTicketSchema } from './schemas/update-ticket.schema';
+import { assignTicketSchema } from './schemas/assign-ticket.schema';
+import { listTicketsQuerySchema } from './schemas/list-tickets-query.schema';
+import { z } from 'zod';
+
+const uuidSchema = z.string().uuid();
 
 @Injectable()
 export class TicketsService {
@@ -13,21 +17,28 @@ export class TicketsService {
     @InjectQueue('email') private emailQueue: Queue,
   ) {}
 
-  findAll(filters: any) {
-    return this.repo.findAll(filters);
+  findAll(query: unknown, userRole: string, userId: string) {
+    const filters = listTicketsQuerySchema.parse(query);
+    return this.repo.findAll({
+      ...filters,
+      submitterId: userRole === 'USER' ? userId : filters.submitterId,
+    });
   }
 
   async findById(id: string) {
+    uuidSchema.parse(id);
     const ticket = await this.repo.findById(id);
     if (!ticket) throw new NotFoundException(`Ticket ${id} not found`);
     return ticket;
   }
 
   async findEvents(ticketId: string) {
+    uuidSchema.parse(ticketId);
     return this.repo.findEventsByTicketId(ticketId);
   }
 
-  async create(dto: CreateTicketDto, submitterId: string) {
+  async create(body: unknown, submitterId: string) {
+    const dto = createTicketSchema.parse(body);
     const ticket = await this.repo.create({
       title: dto.title,
       description: dto.description,
@@ -49,7 +60,9 @@ export class TicketsService {
     return ticket;
   }
 
-  async update(id: string, dto: UpdateTicketDto, actorId: string) {
+  async update(id: string, body: unknown, actorId: string) {
+    uuidSchema.parse(id);
+    const dto = updateTicketSchema.parse(body);
     const ticket = await this.findById(id);
 
     const data: any = { ...dto };
@@ -123,7 +136,9 @@ export class TicketsService {
     return updated;
   }
 
-  async assign(id: string, dto: AssignTicketDto, actorId: string) {
+  async assign(id: string, body: unknown, actorId: string) {
+    uuidSchema.parse(id);
+    const dto = assignTicketSchema.parse(body);
     const ticket = await this.findById(id);
 
     // Check for existing assignment to track unassign
@@ -166,6 +181,7 @@ export class TicketsService {
   }
 
   async remove(id: string, user: any) {
+    uuidSchema.parse(id);
     const ticket = await this.findById(id);
     if (ticket.submitterId !== user.id && user.role !== 'ADMIN') {
       throw new ForbiddenException();

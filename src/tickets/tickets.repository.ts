@@ -33,6 +33,14 @@ export class TicketsRepository {
     const sortBy = filters.sortBy || 'createdAt';
     const sortOrder = filters.sortOrder || 'desc';
 
+    const relationSortMap: Record<string, Prisma.TicketOrderByWithRelationInput> = {
+      category: { category: { name: sortOrder } },
+      submitter: { submitter: { lastName: sortOrder } },
+      department: { department: { name: sortOrder } },
+      assignee: { assignments: { _count: sortOrder } },
+    };
+    const orderBy = relationSortMap[sortBy] || { [sortBy]: sortOrder };
+
     const [data, total] = await Promise.all([
       this.prisma.ticket.findMany({
         where,
@@ -54,7 +62,7 @@ export class TicketsRepository {
             take: 1,
           },
         },
-        orderBy: { [sortBy]: sortOrder },
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),

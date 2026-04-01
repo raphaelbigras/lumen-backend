@@ -39,7 +39,7 @@ export class ListTicketsQueryDto {
   search?: string;
 
   @ApiPropertyOptional()
-  @IsIn(['title', 'status', 'priority', 'createdAt', 'updatedAt'])
+  @IsIn(['title', 'status', 'priority', 'createdAt', 'updatedAt', 'category', 'submitter', 'assignee', 'department'])
   @IsOptional()
   sortBy?: string;
 

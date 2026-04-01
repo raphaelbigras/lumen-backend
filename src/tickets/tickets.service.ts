@@ -32,6 +32,7 @@ export class TicketsService {
       title: dto.title,
       description: dto.description,
       priority: dto.priority,
+      site: dto.site,
       submitter: { connect: { id: submitterId } },
       ...(dto.departmentId && { department: { connect: { id: dto.departmentId } } }),
       ...(dto.categoryId && { category: { connect: { id: dto.categoryId } } }),

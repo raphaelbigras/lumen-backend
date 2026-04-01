@@ -63,6 +63,7 @@ model Department {
 
 model Ticket {
   id           String         @id @default(uuid())
+  ticketNumber Int            @unique @default(autoincrement())
   title        String
   description  String
   status       TicketStatus   @default(OPEN)

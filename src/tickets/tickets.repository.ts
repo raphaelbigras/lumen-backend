@@ -46,6 +46,7 @@ export class TicketsRepository {
         where,
         select: {
           id: true,
+          ticketNumber: true,
           title: true,
           status: true,
           priority: true,
@@ -53,6 +54,7 @@ export class TicketsRepository {
           updatedAt: true,
           resolvedAt: true,
           deletedAt: true,
+          site: true,
           submitter: { select: { id: true, firstName: true, lastName: true } },
           department: { select: { id: true, name: true } },
           category: { select: { id: true, name: true } },

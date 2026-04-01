@@ -23,6 +23,11 @@ export class TicketsService {
     return ticket;
   }
 
+  async findEvents(ticketId: string) {
+    await this.findById(ticketId); // throws NotFoundException if not found
+    return this.repo.findEventsByTicketId(ticketId);
+  }
+
   async create(dto: CreateTicketDto, submitterId: string) {
     const ticket = await this.repo.create({
       title: dto.title,
@@ -60,6 +65,7 @@ export class TicketsService {
 
     const updated = await this.repo.update(id, data);
 
+    // Status change event
     if (dto.status && dto.status !== ticket.status) {
       await this.repo.createEvent({
         ticket: { connect: { id } },
@@ -70,19 +76,93 @@ export class TicketsService {
       await this.emailQueue.add('status-changed', { ticketId: id, status: dto.status });
     }
 
+    // Priority change event
+    if (dto.priority && dto.priority !== ticket.priority) {
+      await this.repo.createEvent({
+        ticket: { connect: { id } },
+        actor: { connect: { id: actorId } },
+        type: 'PRIORITY_CHANGED',
+        payload: { from: ticket.priority, to: dto.priority },
+      });
+    }
+
+    // Category change event
+    if (dto.categoryId && dto.categoryId !== ticket.categoryId) {
+      await this.repo.createEvent({
+        ticket: { connect: { id } },
+        actor: { connect: { id: actorId } },
+        type: 'CATEGORY_CHANGED',
+        payload: {
+          fromId: ticket.categoryId,
+          fromName: ticket.category?.name || null,
+          toId: dto.categoryId,
+        },
+      });
+    }
+
+    // Title change event
+    if (dto.title && dto.title !== ticket.title) {
+      await this.repo.createEvent({
+        ticket: { connect: { id } },
+        actor: { connect: { id: actorId } },
+        type: 'TITLE_CHANGED',
+        payload: { from: ticket.title, to: dto.title },
+      });
+    }
+
+    // Description change event
+    if (dto.description && dto.description !== ticket.description) {
+      await this.repo.createEvent({
+        ticket: { connect: { id } },
+        actor: { connect: { id: actorId } },
+        type: 'DESCRIPTION_CHANGED',
+        payload: {},
+      });
+    }
+
     return updated;
   }
 
   async assign(id: string, dto: AssignTicketDto, actorId: string) {
-    await this.findById(id);
+    const ticket = await this.findById(id);
+
+    // Check for existing assignment to track unassign
+    const currentAssignments = (ticket as any).assignments || [];
+    for (const assignment of currentAssignments) {
+      if (assignment.agentId !== dto.agentId) {
+        await this.repo.createEvent({
+          ticket: { connect: { id } },
+          actor: { connect: { id: actorId } },
+          type: 'UNASSIGNED',
+          payload: {
+            agentId: assignment.agentId,
+            agentName: `${assignment.agent.firstName} ${assignment.agent.lastName}`,
+          },
+        });
+      }
+    }
+
     await this.repo.assignAgent(id, dto.agentId);
+
+    // Fetch agent name for the event payload
+    const updatedTicket = await this.findById(id);
+    const newAssignment = (updatedTicket as any).assignments?.find(
+      (a: any) => a.agentId === dto.agentId,
+    );
+
     await this.repo.createEvent({
       ticket: { connect: { id } },
       actor: { connect: { id: actorId } },
       type: 'ASSIGNED',
-      payload: { agentId: dto.agentId },
+      payload: {
+        agentId: dto.agentId,
+        agentName: newAssignment
+          ? `${newAssignment.agent.firstName} ${newAssignment.agent.lastName}`
+          : dto.agentId,
+      },
     });
-    return this.findById(id);
+
+    return updatedTicket;
   }
 
   async remove(id: string, user: any) {

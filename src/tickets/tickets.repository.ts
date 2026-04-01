@@ -95,6 +95,14 @@ export class TicketsRepository {
     return this.prisma.ticketEvent.create({ data });
   }
 
+  findEventsByTicketId(ticketId: string) {
+    return this.prisma.ticketEvent.findMany({
+      where: { ticketId },
+      include: { actor: { select: { id: true, firstName: true, lastName: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   assignAgent(ticketId: string, agentId: string) {
     return this.prisma.ticketAssignment.upsert({
       where: { ticketId_agentId: { ticketId, agentId } },

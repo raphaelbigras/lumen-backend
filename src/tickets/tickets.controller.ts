@@ -30,6 +30,11 @@ export class TicketsController {
     return this.ticketsService.findById(id);
   }
 
+  @Get(':id/events')
+  findEvents(@Param('id') id: string) {
+    return this.ticketsService.findEvents(id);
+  }
+
   @Post()
   create(@Body() dto: CreateTicketDto, @Request() req) {
     return this.ticketsService.create(dto, req.user.id);

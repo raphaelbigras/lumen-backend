@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, UploadedFile, UseInterceptors, UseGuards, Request } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -19,8 +19,8 @@ export class AttachmentsController {
   @Post()
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
-  upload(@Param('ticketId') ticketId: string, @UploadedFile() file: Express.Multer.File) {
-    return this.attachmentsService.upload(ticketId, file);
+  upload(@Param('ticketId') ticketId: string, @UploadedFile() file: Express.Multer.File, @Request() req) {
+    return this.attachmentsService.upload(ticketId, file, req.user.id);
   }
 
   @Get(':id/download')
@@ -29,7 +29,7 @@ export class AttachmentsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.attachmentsService.remove(id);
+  remove(@Param('id') id: string, @Request() req) {
+    return this.attachmentsService.remove(id, req.user.id);
   }
 }

@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CategoriesRepository } from './categories.repository';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { createCategorySchema } from './schemas/create-category.schema';
+import { updateCategorySchema } from './schemas/update-category.schema';
+import { z } from 'zod';
+
+const uuidSchema = z.string().uuid();
 
 @Injectable()
 export class CategoriesService {
@@ -12,21 +15,26 @@ export class CategoriesService {
   }
 
   async findById(id: string) {
+    uuidSchema.parse(id);
     const category = await this.repo.findById(id);
     if (!category) throw new NotFoundException(`Category ${id} not found`);
     return category;
   }
 
-  create(dto: CreateCategoryDto) {
+  create(body: unknown) {
+    const dto = createCategorySchema.parse(body);
     return this.repo.create({ name: dto.name });
   }
 
-  async update(id: string, dto: UpdateCategoryDto) {
+  async update(id: string, body: unknown) {
+    uuidSchema.parse(id);
+    const dto = updateCategorySchema.parse(body);
     await this.findById(id);
     return this.repo.update(id, { name: dto.name });
   }
 
   async remove(id: string) {
+    uuidSchema.parse(id);
     const category = await this.findById(id);
     if (category.isDefault) {
       throw new ForbiddenException('Cannot delete default categories');

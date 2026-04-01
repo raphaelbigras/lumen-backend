@@ -18,6 +18,10 @@ export class UsersRepository {
     return this.prisma.user.findUnique({ where: { keycloakId } });
   }
 
+  findByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } });
+  }
+
   create(data: Prisma.UserCreateInput) {
     return this.prisma.user.create({ data });
   }

@@ -19,6 +19,10 @@ export class UsersService {
     return this.repo.findByKeycloakId(keycloakId);
   }
 
+  findByEmail(email: string) {
+    return this.repo.findByEmail(email);
+  }
+
   create(data: { keycloakId: string; email: string; firstName: string; lastName: string; role?: any }) {
     return this.repo.create(data);
   }

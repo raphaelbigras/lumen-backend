@@ -24,7 +24,6 @@ export class TicketsService {
   }
 
   async findEvents(ticketId: string) {
-    await this.findById(ticketId); // throws NotFoundException if not found
     return this.repo.findEventsByTicketId(ticketId);
   }
 

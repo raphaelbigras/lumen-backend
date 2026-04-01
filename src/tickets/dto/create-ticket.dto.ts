@@ -1,6 +1,8 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsUUID, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsUUID, MaxLength, IsIn } from 'class-validator';
 import { TicketPriority } from '@prisma/client';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+
+const SITES = ['Valleyfield', 'Beauharnois', 'Montréal', 'Brossard', 'Bromont', 'Hemmingford'];
 
 export class CreateTicketDto {
   @ApiProperty()
@@ -14,18 +16,24 @@ export class CreateTicketDto {
   @IsNotEmpty()
   description: string;
 
-  @ApiPropertyOptional({ enum: TicketPriority })
+  @ApiProperty({ enum: TicketPriority })
   @IsEnum(TicketPriority)
-  @IsOptional()
-  priority?: TicketPriority;
+  @IsNotEmpty()
+  priority: TicketPriority;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsString()
-  @IsOptional()
-  departmentId?: string;
+  @IsNotEmpty()
+  departmentId: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsUUID()
-  @IsOptional()
-  categoryId?: string;
+  @IsNotEmpty()
+  categoryId: string;
+
+  @ApiProperty({ enum: SITES })
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(SITES)
+  site: string;
 }

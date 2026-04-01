@@ -50,7 +50,7 @@ describe('TicketsService', () => {
     repo.createEvent.mockResolvedValue({} as any);
 
     const result = await service.create(
-      { title: 'Test', description: 'Desc', priority: 'MEDIUM' as any },
+      { title: 'Test', description: 'Desc', priority: 'MEDIUM' as any, departmentId: 'dep-1', categoryId: 'cat-1', site: 'Montréal' },
       'user-1',
     );
     expect(result).toEqual(mockTicket);

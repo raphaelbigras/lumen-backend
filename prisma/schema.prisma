@@ -77,6 +77,7 @@ model Ticket {
   resolvedAt   DateTime?
   categoryId   String?
   category     Category?  @relation(fields: [categoryId], references: [id])
+  site         String?
 
   comments     TicketComment[]
   attachments  Attachment[]
@@ -90,6 +91,8 @@ model Ticket {
   @@index([submitterId])
   @@index([deletedAt])
   @@index([createdAt])
+  @@index([resolvedAt])
+  @@index([status, deletedAt])
   @@map("tickets")
 }
 

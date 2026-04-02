@@ -4,8 +4,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { DepartmentsService } from './departments.service';
-import { CreateDepartmentDto } from './dto/create-department.dto';
-import { UpdateDepartmentDto } from './dto/update-department.dto';
 
 @ApiTags('departments')
 @ApiBearerAuth()
@@ -21,14 +19,14 @@ export class DepartmentsController {
 
   @Post()
   @Roles('ADMIN', 'AGENT')
-  create(@Body() dto: CreateDepartmentDto) {
-    return this.departmentsService.create(dto);
+  create(@Body() body: unknown) {
+    return this.departmentsService.create(body);
   }
 
   @Patch(':id')
   @Roles('ADMIN', 'AGENT')
-  update(@Param('id') id: string, @Body() dto: UpdateDepartmentDto) {
-    return this.departmentsService.update(id, dto);
+  update(@Param('id') id: string, @Body() body: unknown) {
+    return this.departmentsService.update(id, body);
   }
 
   @Delete(':id')

@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { z } from 'zod';
 import { CommentsRepository } from './comments.repository';
-import { CreateCommentDto } from './dto/create-comment.dto';
+import { createCommentSchema } from './schemas/create-comment.schema';
 import { PrismaService } from '../prisma/prisma.service';
+
+const uuidSchema = z.string().uuid();
 
 @Injectable()
 export class CommentsService {
@@ -11,10 +14,12 @@ export class CommentsService {
   ) {}
 
   findByTicket(ticketId: string) {
+    uuidSchema.parse(ticketId);
     return this.repo.findByTicket(ticketId);
   }
 
-  async create(ticketId: string, dto: CreateCommentDto, authorId: string) {
+  async create(ticketId: string, body: unknown, authorId: string) {
+    const dto = createCommentSchema.parse(body);
     const comment = await this.repo.create({
       body: dto.body,
       ticket: { connect: { id: ticketId } },
@@ -34,6 +39,7 @@ export class CommentsService {
   }
 
   async remove(id: string, userId: string, userRole: string) {
+    uuidSchema.parse(id);
     const comment = await this.prisma.ticketComment.findFirst({ where: { id, deletedAt: null } });
     if (!comment) throw new NotFoundException();
 

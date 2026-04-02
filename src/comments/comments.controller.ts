@@ -2,7 +2,6 @@ import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request } from '
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CommentsService } from './comments.service';
-import { CreateCommentDto } from './dto/create-comment.dto';
 
 @ApiTags('comments')
 @ApiBearerAuth()
@@ -17,8 +16,8 @@ export class CommentsController {
   }
 
   @Post()
-  create(@Param('ticketId') ticketId: string, @Body() dto: CreateCommentDto, @Request() req) {
-    return this.commentsService.create(ticketId, dto, req.user.id);
+  create(@Param('ticketId') ticketId: string, @Body() body: unknown, @Request() req) {
+    return this.commentsService.create(ticketId, body, req.user.id);
   }
 
   @Delete(':id')

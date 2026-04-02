@@ -1,5 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { z } from 'zod';
 import { UsersRepository } from './users.repository';
+import { updateUserRoleSchema } from './schemas/update-user-role.schema';
+
+const uuidSchema = z.string().uuid();
 
 @Injectable()
 export class UsersService {
@@ -10,6 +14,7 @@ export class UsersService {
   }
 
   async findById(id: string) {
+    uuidSchema.parse(id);
     const user = await this.repo.findById(id);
     if (!user) throw new NotFoundException(`User ${id} not found`);
     return user;
@@ -33,5 +38,11 @@ export class UsersService {
 
   updateRole(keycloakId: string, role: string) {
     return this.repo.updateByKeycloakId(keycloakId, { role: role as any });
+  }
+
+  async updateUserRole(id: string, body: unknown) {
+    uuidSchema.parse(id);
+    const dto = updateUserRoleSchema.parse(body);
+    return this.repo.update(id, { role: dto.role as any });
   }
 }

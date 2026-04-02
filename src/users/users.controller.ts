@@ -4,13 +4,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UsersService } from './users.service';
-import { IsIn, IsString } from 'class-validator';
-
-class UpdateUserRoleDto {
-  @IsString()
-  @IsIn(['ADMIN', 'AGENT', 'USER'])
-  role: string;
-}
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -32,7 +25,7 @@ export class UsersController {
   @Patch(':id/role')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  updateRole(@Param('id') id: string, @Body() dto: UpdateUserRoleDto) {
-    return this.usersService.update(id, { role: dto.role as any });
+  updateRole(@Param('id') id: string, @Body() body: unknown) {
+    return this.usersService.updateUserRole(id, body);
   }
 }

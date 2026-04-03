@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const SORT_FIELDS = ['title', 'status', 'priority', 'createdAt', 'updatedAt', 'category', 'submitter', 'assignee', 'department'] as const;
+const SORT_FIELDS = ['ticketNumber', 'title', 'status', 'priority', 'createdAt', 'updatedAt', 'category', 'submitter', 'assignee', 'department', 'site'] as const;
 
 export const listTicketsQuerySchema = z.object({
   status: z.enum(['OPEN', 'IN_PROGRESS', 'PENDING', 'RESOLVED', 'CLOSED']).optional(),

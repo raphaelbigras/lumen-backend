@@ -13,7 +13,7 @@ NestJS REST API for **Lumen** — a self-hosted IT ticketing system.
 | File Storage | MinIO (S3-compatible) |
 | Email | Nodemailer (SMTP) |
 | Search | PostgreSQL full-text search (ILIKE) |
-| Validation | class-validator + class-transformer |
+| Validation | Zod 4 schemas + ZodExceptionFilter |
 | Docs | Swagger / OpenAPI at `/api/docs` |
 
 ## Prerequisites
@@ -84,7 +84,7 @@ The backend is a **modular monolith**. Each domain is an isolated NestJS module 
 Controller  →  Service  →  Repository  →  Prisma / External Services
 ```
 
-- **Controllers** handle HTTP routing, request validation (`class-validator` DTOs), and response shaping only.
+- **Controllers** handle HTTP routing, request validation (Zod schemas), and response shaping only.
 - **Services** contain all business logic, audit event creation, and email queue dispatch — no direct DB calls.
 - **Repositories** own all database access — no business logic.
 
@@ -231,7 +231,7 @@ The Ticket model has 9 indexes for query performance:
 - **TicketEvent is the audit log** — every field change writes an immutable event row with actor and JSON payload.
 - **TicketAssignment uses upsert** — `@@unique([ticketId, agentId])` constraint prevents duplicates.
 - **Connection pool size 10** — sized for parallel analytics queries.
-- **All ticket creation fields are required** — enforced via `class-validator` on `CreateTicketDto`.
+- **All ticket creation fields are required** — enforced via Zod schema on `CreateTicketDto`.
 
 ### Enums
 

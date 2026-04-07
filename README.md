@@ -116,7 +116,7 @@ All routes are prefixed with `/api` and require a `Bearer` JWT unless noted.
 | `GET` | `/api/tickets/:id` | Get ticket detail with comments, attachments, assignments, events, category, department |
 | `GET` | `/api/tickets/:id/events` | Get audit event log for a ticket |
 | `POST` | `/api/tickets` | Create ticket (all fields required: `title`, `description`, `priority`, `categoryId`, `departmentId`, `site`) |
-| `PATCH` | `/api/tickets/:id` | Update ticket (status, priority, title, description, category) — each change creates an audit event |
+| `PATCH` | `/api/tickets/:id` | Update ticket (status, priority, title, description, category, department) — each change creates an audit event |
 | `POST` | `/api/tickets/:id/assign` | Assign an agent (upsert — creates ASSIGNED/UNASSIGNED events) |
 | `DELETE` | `/api/tickets/:id` | Soft-delete (submitter or ADMIN only) |
 
@@ -213,6 +213,7 @@ Every mutation writes an immutable event row with `actorId` and a JSON `payload`
 | `STATUS_CHANGED` | Status update (`{ from, to }`) |
 | `PRIORITY_CHANGED` | Priority update (`{ from, to }`) |
 | `CATEGORY_CHANGED` | Category reassignment |
+| `DEPARTMENT_CHANGED` | Department reassignment |
 | `TITLE_CHANGED` | Title edit |
 | `DESCRIPTION_CHANGED` | Description edit |
 | `ASSIGNED` | Agent assigned (`{ agentId, agentName }`) |

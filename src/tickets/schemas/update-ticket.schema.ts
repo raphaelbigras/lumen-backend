@@ -6,6 +6,7 @@ export const updateTicketSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().min(1).optional(),
   categoryId: z.string().uuid().optional(),
+  departmentId: z.string().uuid().optional(),
 });
 
 export type UpdateTicket = z.infer<typeof updateTicketSchema>;

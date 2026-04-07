@@ -70,6 +70,10 @@ export class TicketsService {
       data.category = { connect: { id: dto.categoryId } };
       delete data.categoryId;
     }
+    if (dto.departmentId) {
+      data.department = { connect: { id: dto.departmentId } };
+      delete data.departmentId;
+    }
     if (dto.status === 'RESOLVED' && ticket.status !== 'RESOLVED') {
       data.resolvedAt = new Date();
     } else if (dto.status && dto.status !== 'RESOLVED' && ticket.status === 'RESOLVED') {
@@ -109,6 +113,20 @@ export class TicketsService {
           fromId: ticket.categoryId,
           fromName: ticket.category?.name || null,
           toId: dto.categoryId,
+        },
+      });
+    }
+
+    // Department change event
+    if (dto.departmentId && dto.departmentId !== ticket.departmentId) {
+      await this.repo.createEvent({
+        ticket: { connect: { id } },
+        actor: { connect: { id: actorId } },
+        type: 'DEPARTMENT_CHANGED',
+        payload: {
+          fromId: ticket.departmentId,
+          fromName: (ticket as any).department?.name || null,
+          toId: dto.departmentId,
         },
       });
     }

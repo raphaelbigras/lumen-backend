@@ -9,7 +9,8 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "test": "jest",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "db:sql": "prisma db execute --file prisma/sql/001_trgm_title.sql"
   },
   "dependencies": {
     "@nestjs/bull": "^10.0.0",

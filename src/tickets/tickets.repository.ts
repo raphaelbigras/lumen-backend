@@ -89,6 +89,35 @@ export class TicketsRepository {
     });
   }
 
+  findByIdLight(id: string) {
+    return this.prisma.ticket.findFirst({
+      where: { id, deletedAt: null },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        priority: true,
+        submitterId: true,
+        departmentId: true,
+        categoryId: true,
+        resolvedAt: true,
+        department: { select: { name: true } },
+        category: { select: { name: true } },
+      },
+    });
+  }
+
+  findAssignmentsForTicket(ticketId: string) {
+    return this.prisma.ticketAssignment.findMany({
+      where: { ticketId },
+      select: {
+        agentId: true,
+        agent: { select: { firstName: true, lastName: true } },
+      },
+    });
+  }
+
   create(data: Prisma.TicketCreateInput) {
     return this.prisma.ticket.create({ data, include: { submitter: true } });
   }

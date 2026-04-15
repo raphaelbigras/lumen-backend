@@ -63,7 +63,8 @@ export class TicketsService {
   async update(id: string, body: unknown, actorId: string) {
     uuidSchema.parse(id);
     const dto = updateTicketSchema.parse(body);
-    const ticket = await this.findById(id);
+    const ticket = await this.repo.findByIdLight(id);
+    if (!ticket) throw new NotFoundException(`Ticket ${id} not found`);
 
     const data: any = { ...dto };
     if (dto.categoryId) {
@@ -125,7 +126,7 @@ export class TicketsService {
         type: 'DEPARTMENT_CHANGED',
         payload: {
           fromId: ticket.departmentId,
-          fromName: (ticket as any).department?.name || null,
+          fromName: ticket.department?.name || null,
           toId: dto.departmentId,
         },
       });
@@ -157,10 +158,10 @@ export class TicketsService {
   async assign(id: string, body: unknown, actorId: string) {
     uuidSchema.parse(id);
     const dto = assignTicketSchema.parse(body);
-    const ticket = await this.findById(id);
+    const ticket = await this.repo.findByIdLight(id);
+    if (!ticket) throw new NotFoundException(`Ticket ${id} not found`);
 
-    // Check for existing assignment to track unassign
-    const currentAssignments = (ticket as any).assignments || [];
+    const currentAssignments = await this.repo.findAssignmentsForTicket(id);
     for (const assignment of currentAssignments) {
       if (assignment.agentId !== dto.agentId) {
         await this.repo.createEvent({
@@ -177,11 +178,8 @@ export class TicketsService {
 
     await this.repo.assignAgent(id, dto.agentId);
 
-    // Fetch agent name for the event payload
-    const updatedTicket = await this.findById(id);
-    const newAssignment = (updatedTicket as any).assignments?.find(
-      (a: any) => a.agentId === dto.agentId,
-    );
+    const newAssignments = await this.repo.findAssignmentsForTicket(id);
+    const newAssignment = newAssignments.find((a) => a.agentId === dto.agentId);
 
     await this.repo.createEvent({
       ticket: { connect: { id } },
@@ -195,12 +193,13 @@ export class TicketsService {
       },
     });
 
-    return updatedTicket;
+    return this.findById(id);
   }
 
   async remove(id: string, user: any) {
     uuidSchema.parse(id);
-    const ticket = await this.findById(id);
+    const ticket = await this.repo.findByIdLight(id);
+    if (!ticket) throw new NotFoundException(`Ticket ${id} not found`);
     if (ticket.submitterId !== user.id && user.role !== 'ADMIN') {
       throw new ForbiddenException();
     }

@@ -108,6 +108,14 @@ export class TicketsRepository {
     });
   }
 
+  async findUserName(userId: string): Promise<string | null> {
+    const u = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true, lastName: true },
+    });
+    return u ? `${u.firstName} ${u.lastName}` : null;
+  }
+
   findAssignmentsForTicket(ticketId: string) {
     return this.prisma.ticketAssignment.findMany({
       where: { ticketId },
@@ -148,5 +156,40 @@ export class TicketsRepository {
       create: { ticketId, agentId },
       update: {},
     });
+  }
+
+  replaceAssignment(params: {
+    ticketId: string;
+    agentId: string;
+    actorId: string;
+    unassignEvents: { agentId: string; agentName: string }[];
+    assignedAgentName: string;
+  }) {
+    const { ticketId, agentId, actorId, unassignEvents, assignedAgentName } = params;
+    return this.prisma.$transaction([
+      ...unassignEvents.map((u) =>
+        this.prisma.ticketEvent.create({
+          data: {
+            ticket: { connect: { id: ticketId } },
+            actor: { connect: { id: actorId } },
+            type: 'UNASSIGNED',
+            payload: { agentId: u.agentId, agentName: u.agentName },
+          },
+        }),
+      ),
+      this.prisma.ticketAssignment.upsert({
+        where: { ticketId_agentId: { ticketId, agentId } },
+        create: { ticketId, agentId },
+        update: {},
+      }),
+      this.prisma.ticketEvent.create({
+        data: {
+          ticket: { connect: { id: ticketId } },
+          actor: { connect: { id: actorId } },
+          type: 'ASSIGNED',
+          payload: { agentId, agentName: assignedAgentName },
+        },
+      }),
+    ]);
   }
 }

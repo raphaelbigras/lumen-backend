@@ -162,35 +162,24 @@ export class TicketsService {
     if (!ticket) throw new NotFoundException(`Ticket ${id} not found`);
 
     const currentAssignments = await this.repo.findAssignmentsForTicket(id);
-    for (const assignment of currentAssignments) {
-      if (assignment.agentId !== dto.agentId) {
-        await this.repo.createEvent({
-          ticket: { connect: { id } },
-          actor: { connect: { id: actorId } },
-          type: 'UNASSIGNED',
-          payload: {
-            agentId: assignment.agentId,
-            agentName: `${assignment.agent.firstName} ${assignment.agent.lastName}`,
-          },
-        });
-      }
-    }
+    const unassignEvents = currentAssignments
+      .filter((a) => a.agentId !== dto.agentId)
+      .map((a) => ({
+        agentId: a.agentId,
+        agentName: `${a.agent.firstName} ${a.agent.lastName}`,
+      }));
 
-    await this.repo.assignAgent(id, dto.agentId);
+    const existing = currentAssignments.find((a) => a.agentId === dto.agentId);
+    const assignedAgentName = existing
+      ? `${existing.agent.firstName} ${existing.agent.lastName}`
+      : await this.repo.findUserName(dto.agentId);
 
-    const newAssignments = await this.repo.findAssignmentsForTicket(id);
-    const newAssignment = newAssignments.find((a) => a.agentId === dto.agentId);
-
-    await this.repo.createEvent({
-      ticket: { connect: { id } },
-      actor: { connect: { id: actorId } },
-      type: 'ASSIGNED',
-      payload: {
-        agentId: dto.agentId,
-        agentName: newAssignment
-          ? `${newAssignment.agent.firstName} ${newAssignment.agent.lastName}`
-          : dto.agentId,
-      },
+    await this.repo.replaceAssignment({
+      ticketId: id,
+      agentId: dto.agentId,
+      actorId,
+      unassignEvents,
+      assignedAgentName: assignedAgentName ?? dto.agentId,
     });
 
     return this.findById(id);

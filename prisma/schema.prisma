@@ -46,6 +46,9 @@ model User {
   comments           TicketComment[]
   events             TicketEvent[]
 
+  @@index([lastName])
+  @@index([role])
+  @@index([deletedAt])
   @@map("users")
 }
 
@@ -94,6 +97,7 @@ model Ticket {
   @@index([createdAt])
   @@index([resolvedAt])
   @@index([status, deletedAt])
+  @@index([deletedAt, createdAt])
   @@map("tickets")
 }
 
@@ -108,6 +112,8 @@ model TicketComment {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
+  @@index([ticketId, deletedAt])
+  @@index([createdAt])
   @@map("ticket_comments")
 }
 
@@ -121,6 +127,7 @@ model TicketEvent {
   payload   Json     @default("{}")
   createdAt DateTime @default(now())
 
+  @@index([ticketId, createdAt])
   @@map("ticket_events")
 }
 
@@ -135,6 +142,7 @@ model Attachment {
   createdAt   DateTime  @default(now())
   deletedAt   DateTime?
 
+  @@index([ticketId, deletedAt])
   @@map("attachments")
 }
 
@@ -148,6 +156,7 @@ model TicketAssignment {
 
   @@unique([ticketId, agentId])
   @@index([agentId])
+  @@index([ticketId, assignedAt])
   @@map("ticket_assignments")
 }
 

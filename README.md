@@ -12,7 +12,7 @@ NestJS REST API for **Lumen** — a self-hosted IT ticketing system.
 | Job Queue | BullMQ + Redis |
 | File Storage | MinIO (S3-compatible) |
 | Email | Nodemailer (SMTP) |
-| Search | PostgreSQL full-text search (ILIKE) |
+| Search | PostgreSQL `ILIKE` backed by a `pg_trgm` GIN index on `tickets.title` |
 | Validation | Zod 4 schemas + ZodExceptionFilter |
 | Docs | Swagger / OpenAPI at `/api/docs` |
 
@@ -37,7 +37,10 @@ cp .env.example .env
 # 4. Push database schema
 npx prisma db push
 
-# 5. Start in watch mode
+# 5. Apply raw-SQL indexes not representable in schema.prisma
+npm run db:sql
+
+# 6. Start in watch mode
 npm run start:dev
 ```
 
@@ -74,6 +77,7 @@ npm run test:e2e        # E2E tests
 npx prisma db push      # Push schema to DB
 npx prisma generate     # Regenerate Prisma client
 npx prisma studio       # Open Prisma GUI
+npm run db:sql          # Apply prisma/sql/*.sql (pg_trgm extension + title GIN index)
 ```
 
 ## Architecture
@@ -221,16 +225,31 @@ Every mutation writes an immutable event row with `actorId` and a JSON `payload`
 
 ### Database Indexes
 
-The Ticket model has 9 indexes for query performance:
+Query performance is backed by indexes on every hot filter/sort path:
 
-- `status`, `priority`, `categoryId`, `departmentId`, `submitterId`, `deletedAt`, `createdAt`, `resolvedAt`
-- Composite: `(status, deletedAt)` for analytics
+**Ticket** — `status`, `priority`, `categoryId`, `departmentId`, `submitterId`, `deletedAt`, `createdAt`, `resolvedAt`, composite `(status, deletedAt)` for analytics, composite `(deletedAt, createdAt)` for the default list order.
+
+**TicketComment** — `(ticketId, deletedAt)` + `createdAt` (ticket detail view).
+
+**TicketEvent** — `(ticketId, createdAt)` (audit log ordering).
+
+**Attachment** — `(ticketId, deletedAt)`.
+
+**TicketAssignment** — `(ticketId, assignedAt)` for "latest agent" lookups, plus the existing `agentId` and unique `(ticketId, agentId)`.
+
+**User** — `lastName` (sort by submitter/agent name), `role`, `deletedAt`.
+
+**Raw-SQL (in `prisma/sql/001_trgm_title.sql`, applied via `npm run db:sql`):**
+- `CREATE EXTENSION pg_trgm`
+- `tickets_title_trgm_idx` — GIN on `title gin_trgm_ops` so the search `ILIKE '%needle%'` uses an index instead of a sequential scan.
 
 ### Key Design Decisions
 
 - **Soft deletes everywhere** — all models have a `deletedAt` field; nothing is hard-deleted.
 - **TicketEvent is the audit log** — every field change writes an immutable event row with actor and JSON payload.
 - **TicketAssignment uses upsert** — `@@unique([ticketId, agentId])` constraint prevents duplicates.
+- **Agent (re)assignment is atomic** — `TicketsRepository.replaceAssignment` wraps UNASSIGNED events, the upsert, and the ASSIGNED event in a single `prisma.$transaction` so the audit log cannot drift out of sync with the assignments table.
+- **Light reads for mutations** — `update`, `remove`, and `assign` in `TicketsService` use `findByIdLight` (scalars + `category.name` + `department.name`) instead of the full `findById` hydration, avoiding hundreds of unnecessary rows (comments, events, attachments) per mutation.
 - **Connection pool size 10** — sized for parallel analytics queries.
 - **All ticket creation fields are required** — enforced via Zod schema on `CreateTicketDto`.
 
